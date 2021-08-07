@@ -17,48 +17,30 @@
 
 package discord4j.core.spec;
 
-import discord4j.core.object.component.LayoutComponent;
 import discord4j.core.object.entity.Message;
 import discord4j.discordjson.json.MessageEditRequest;
 import discord4j.discordjson.possible.Possible;
-import discord4j.rest.util.AllowedMentions;
 import org.immutables.value.Value;
 import reactor.core.CoreSubscriber;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static discord4j.core.spec.InternalSpecUtils.mapPossibleOptional;
 
 @Value.Immutable(singleton = true)
-interface MessageEditSpecGenerator extends Spec<MessageEditRequest> {
-
-    Possible<Optional<String>> content();
-
-    Possible<Optional<List<EmbedCreateSpec>>> embeds();
-
-    Possible<Optional<AllowedMentions>> allowedMentions();
+interface MessageEditSpecGenerator extends MessageRequestSpec<MessageEditRequest> {
 
     Possible<Optional<List<Message.Flag>>> flags();
-
-    Possible<Optional<List<LayoutComponent>>> components();
 
     @Override
     default MessageEditRequest asRequest() {
         return MessageEditRequest.builder()
-                .content(content())
-                .embeds(mapPossibleOptional(embeds(), embeds -> embeds.stream()
-                        .map(EmbedCreateSpec::asRequest)
-                        .collect(Collectors.toList())))
-                .allowedMentions(mapPossibleOptional(allowedMentions(), AllowedMentions::toData))
+                .from(getBaseRequest())
                 .flags(mapPossibleOptional(flags(), f -> f.stream()
                         .mapToInt(Message.Flag::getFlag)
                         .reduce(0, (left, right) -> left | right)))
-                .components(mapPossibleOptional(components(), components -> components.stream()
-                        .map(LayoutComponent::getData)
-                        .collect(Collectors.toList())))
                 .build();
     }
 }
